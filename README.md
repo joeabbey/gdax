@@ -1,6 +1,6 @@
 # gdax
 
-ncurses gdax client writting in nodejs
+ncurses gdax client written in nodejs
 
 # Build
 
