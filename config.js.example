@@ -1,0 +1,5 @@
+module.exports = {
+	passphrase: "",
+	apikey: "",
+ 	base64secret: ""
+};
