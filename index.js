@@ -1,12 +1,16 @@
+const optionalRequire = require("optional-require")(require);
 const GDAX = require('gdax');
-const config = require('./config');
+const config = optionalRequire('./config');
+const date = require('date-utils');
 
 const sprintf = require("sprintf-js").sprintf
 const blessed = require('blessed')
 const contrib = require('blessed-contrib')
 
 const apiURI = 'https://api.gdax.com';
-const authenticatedClient = new GDAX.AuthenticatedClient(config.apikey, config.base64secret, config.passphrase, apiURI)
+
+if(config)
+	var authenticatedClient = new GDAX.AuthenticatedClient(config.apikey, config.base64secret, config.passphrase, apiURI)
 
 const BTC_USD = 'BTC-USD';
 const ETH_USD = 'ETH-USD';
@@ -58,16 +62,21 @@ const websocketCallback = (data) => {
 	//Sometimes fills have no price /shrug
 	if ("price" in data) {
 
+		var when = new Date(data.time);
+		var logger;
+
 		if(data.product_id === 'BTC-USD')
-			BTClog.log(sprintf("BTC-USD: %s - %s", parseFloat(data.price).toFixed(2), data.size));
+			logger = BTClog
 
 		if(data.product_id === 'ETH-USD')
-			ETHlog.log(sprintf("ETH-USD: %s - %s", parseFloat(data.price).toFixed(2), data.size));
+			logger = ETHlog
 
 		if(data.product_id === 'LTC-USD') {
 			current_price = parseFloat(data.price).toFixed(2);
-			LTClog.log(sprintf("LTC-USD: %s - %s", current_price, data.size));
+			logger = LTClog
 		}
+
+		logger.log(sprintf(" %12.8f    %6.2f    %s", parseFloat(data.size), parseFloat(data.price), when.toFormat("HH:MI:SS")));
 	}
 }
 

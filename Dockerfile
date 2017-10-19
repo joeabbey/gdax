@@ -1,13 +1,12 @@
 FROM node:7
 
 RUN npm init -y
-RUN npm install gdax blessed blessed-contrib sprintf-js
+RUN npm install gdax blessed blessed-contrib sprintf-js date-utils optional-require
 
 RUN mkdir /app/
-ADD index.js /app/
 
 #Be sure to copy over config.js.example to config.js!!
-ADD config.js /app/ 
+ADD *.js /app/ 
 
 WORKDIR /app/
 ENV LANG en_US.utf8 
