@@ -4,4 +4,8 @@ ncurses gdax client writting in nodejs
 
 # Build
 
-make
+Copy the config.js.example into config.js.  Then fill out your API keys from GDAX.  
+
+Please install Docker and then 
+
+`make`
