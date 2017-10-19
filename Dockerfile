@@ -5,7 +5,9 @@ RUN npm install gdax blessed blessed-contrib sprintf-js
 
 RUN mkdir /app/
 ADD index.js /app/
-ADD config.js /app/ #Copy over config.js.example 
+
+#Be sure to copy over config.js.example to config.js!!
+ADD config.js /app/ 
 
 WORKDIR /app/
 ENV LANG en_US.utf8 
