@@ -62,7 +62,8 @@ const websocketCallback = (data) => {
 	//Sometimes fills have no price /shrug
 	if ("price" in data) {
 
-		var when = new Date(data.time);
+		var when = new Date(data.time)
+
 		var logger;
 
 		if(data.product_id === 'BTC-USD')
@@ -76,7 +77,7 @@ const websocketCallback = (data) => {
 			logger = LTClog
 		}
 
-		logger.log(sprintf(" %12.8f    %6.2f    %s", parseFloat(data.size), parseFloat(data.price), when.toFormat("HH:MI:SS")));
+		logger.log(sprintf(" %12.8f    %6.2f    %s", parseFloat(data.size), parseFloat(data.price), when.toFormat("HH24:MI:SS")));
 	}
 }
 

@@ -1,5 +1,8 @@
 FROM node:7
 
+RUN ln -fs /usr/share/zoneinfo/Etc/GMT+4 /etc/localtime
+RUN date
+
 RUN npm init -y
 RUN npm install gdax blessed blessed-contrib sprintf-js date-utils optional-require
 
