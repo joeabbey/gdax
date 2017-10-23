@@ -1,3 +1,7 @@
-all: index.js Dockerfile
+all: run
+
+run: build
+	docker run -it gdax
+
+build: index.js config.js Dockerfile
 	docker build -t gdax .
-	docker run -it gdax 
