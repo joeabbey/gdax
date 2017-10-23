@@ -17,25 +17,39 @@ if(config)
 const BTC_USD = 'BTC-USD';
 const ETH_USD = 'ETH-USD';
 const LTC_USD = 'LTC-USD';
-const lineChartProduct = 'BTC-USD';
+const ETH_BTC = 'ETH-BTC';
+const LTC_BTC = 'LTC-BTC';
 
-const BTC_websocket = new GDAX.WebsocketClient([BTC_USD]);
-const ETH_websocket = new GDAX.WebsocketClient([ETH_USD]);
-const LTC_websocket = new GDAX.WebsocketClient([LTC_USD]);
+const lineChartProduct = BTC_USD;
+
+const BTC_USD_websocket = new GDAX.WebsocketClient([BTC_USD]);
+const ETH_USD_websocket = new GDAX.WebsocketClient([ETH_USD]);
+const LTC_USD_websocket = new GDAX.WebsocketClient([LTC_USD]);
+const ETH_BTC_websocket = new GDAX.WebsocketClient([ETH_BTC]);
+const LTC_BTC_websocket = new GDAX.WebsocketClient([LTC_BTC]);
 
 //
 // Build a nice grid
 //
 
 var screen = blessed.screen()
-var grid = new contrib.grid({rows: 8, cols: 3, screen: screen})
+var grid = new contrib.grid({rows: 8, cols: 5, screen: screen})
 
-var BTClog  = grid.set(0, 0, 3, 1, contrib.log, {label: "BTC-USD Trade History"})
-var ETHlog  = grid.set(0, 1, 3, 1, contrib.log, {label: "ETH-USD Trade History"})
-var LTClog  = grid.set(0, 2, 3, 1, contrib.log, {label: "LTC-USD Trade History"})
+var BTC_USD_log  = grid.set(0, 0, 3, 1, contrib.log, {label: "BTC-USD Trade History"})
+var ETH_USD_log  = grid.set(0, 1, 3, 1, contrib.log, {label: "ETH-USD Trade History"})
+var LTC_USD_log  = grid.set(0, 2, 3, 1, contrib.log, {label: "LTC-USD Trade History"})
+var ETH_BTC_log  = grid.set(0, 3, 3, 1, contrib.log, {label: "ETH-BTC Trade History"})
+var LTC_BTC_log  = grid.set(0, 4, 3, 1, contrib.log, {label: "LTC-BTC Trade History"})
 
-var line = grid.set(3, 0, 5, 3, contrib.line, {label: "BTC-USD Price Chart", minY: 5600.0})
-var current_price = 5600.0;
+var line = grid.set(3, 0, 5, 5, contrib.line, {label: "BTC-USD Price Chart", minY: 5600.0})
+
+var currentPrice = {
+	BTC_USD: 6000.0,
+	ETH_USD: 300.0,
+	LTC_USD: 60.0,
+	ETH_BTC: .05,
+	LTC_BTC: .01
+}
 
 var tradeChart = {
 	title: 'BTC-USD trade chart',
@@ -56,7 +70,7 @@ screen.key(['escape', 'q', 'C-c'], function(ch, key) {
 screen.render()
 
 // Stream all of the trades (that are filled)
-const websocketCallback = (data) => {
+const websocketPriceCallback = (data) => {
 
 	//Just care about what's filled for now
 	if (!(data.type === 'match'))
@@ -69,32 +83,56 @@ const websocketCallback = (data) => {
 
 		var logger;
 
+		currentPrice[data.product_id] = parseFloat(data.price);
+
 		if(data.product_id === 'BTC-USD')
-			logger = BTClog
+			logger = BTC_USD_log
 
 		if(data.product_id === 'ETH-USD')
-			logger = ETHlog
+			logger = ETH_USD_log
 
 		if(data.product_id === 'LTC-USD')
-			logger = LTClog
-
-		if(data.product_id === lineChartProduct)
-			current_price = parseFloat(data.price)
+			logger = LTC_USD_log
 
 		logger.log(sprintf(" %12.8f    %6.2f    %s", parseFloat(data.size), parseFloat(data.price), when.toFormat("HH24:MI:SS")));
 	}
 }
 
-BTC_websocket.on('message', websocketCallback);
-ETH_websocket.on('message', websocketCallback);
-LTC_websocket.on('message', websocketCallback);
+// Stream all of the trades (that are filled)
+const websocketDeltaCallback = (data) => {
+
+	//Just care about what's filled for now
+	if (!(data.type === 'match'))
+		return;
+
+	//Sometimes fills have no price /shrug
+	if ("price" in data) {
+
+		var when = new Date(data.time)
+
+		currentPrice[data.product_id] = parseFloat(data.price);
+
+		if(data.product_id === 'ETH-BTC')
+			ETH_BTC_log.log(sprintf(" %8.6f - %8.6f = %8.6f %s", currentPrice[data.product_id] , currentPrice['ETH-USD'] / currentPrice['BTC-USD'], currentPrice[data.product_id] - (currentPrice['ETH-USD'] / currentPrice['BTC-USD']), when.toFormat("HH24:MI:SS")));
+
+		if(data.product_id === 'LTC-BTC')
+			LTC_BTC_log.log(sprintf(" %8.6f - %8.6f = %8.6f %s", currentPrice[data.product_id] , currentPrice['LTC-USD'] / currentPrice['BTC-USD'], currentPrice[data.product_id] - (currentPrice['LTC-USD'] / currentPrice['BTC-USD']), when.toFormat("HH24:MI:SS")));
+    }
+}
+
+BTC_USD_websocket.on('message', websocketPriceCallback);
+ETH_USD_websocket.on('message', websocketPriceCallback);
+LTC_USD_websocket.on('message', websocketPriceCallback);
+
+ETH_BTC_websocket.on('message', websocketDeltaCallback);
+LTC_BTC_websocket.on('message', websocketDeltaCallback);
 
 
 
 // Meanwhile let's periodically dispaly the current price in the graph
 function updateChart() {
 	tradeChart.y.shift()
-	tradeChart.y.push(parseFloat(current_price))
+	tradeChart.y.push(currentPrice['BTC-USD'])
 	line.setData(tradeChart)
 }
 
@@ -105,5 +143,5 @@ const dummycallback = (err, data) => {
 setInterval( function() {
 	updateChart();
 	screen.render();
-}, 1000);
+}, 10000);
 
