@@ -12,8 +12,9 @@ const apiURI = 'https://api.gdax.com';
 const currencies = ['BTC-USD', 'ETH-USD', 'LTC-USD', 'ETH-BTC', 'LTC-BTC']
 var authenticatedClient = null;
 
-if(config)
-	authenticatedClient = new GDAX.AuthenticatedClient(config.apikey, config.base64secret, config.passphrase, apiURI)
+//if(config) {
+//	authenticatedClient = new GDAX.AuthenticatedClient(config.apikey, config.base64secret, config.passphrase, apiURI)
+
 const websocket = new GDAX.WebsocketClient(currencies);
 
 var screen = blessed.screen()
@@ -69,14 +70,14 @@ const websocketPriceCallback = (data) => {
 
 		var when = new Date(data.time)
 		var logger = currencyMap[data.product_id].logger;
-		var color_begin = "{red-fg}";
-		var color_end = "{/red-fg}";
+		var color_begin = "{green-fg}";
+		var color_end = "{/green-fg}";
 
 		currencyMap[data.product_id].currentPrice = parseFloat(data.price);
 
 		if(data.side == "buy") {
-			color_begin = "{green-fg}";
-			color_end = "{/green-fg}";
+			color_begin = "{red-fg}";
+			color_end = "{/red-fg}";
 		}
 
 		if(data.product_id === 'ETH-BTC') {
