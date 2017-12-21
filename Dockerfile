@@ -1,6 +1,6 @@
 FROM node:7
 
-RUN ln -fs /usr/share/zoneinfo/Etc/GMT+4 /etc/localtime
+RUN ln -fs /usr/share/zoneinfo/Etc/GMT+5 /etc/localtime
 RUN date
 
 RUN npm init -y

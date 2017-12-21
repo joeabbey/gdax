@@ -9,7 +9,7 @@ const contrib = require('blessed-contrib')
 
 const apiURI = 'https://api.gdax.com';
 
-const currencies = ['BTC-USD', 'ETH-USD', 'LTC-USD', 'ETH-BTC', 'LTC-BTC']
+const currencies = ['BTC-USD', 'BCH-USD', 'ETH-USD', 'LTC-USD', 'ETH-BTC', 'LTC-BTC']
 var authenticatedClient = null;
 
 //if(config) {
@@ -18,7 +18,7 @@ var authenticatedClient = null;
 const websocket = new GDAX.WebsocketClient(currencies);
 
 var screen = blessed.screen()
-var grid = new contrib.grid({rows: 8, cols: 5, screen: screen})
+var grid = new contrib.grid({rows: 8, cols: currencies.length, screen: screen})
 
 var currencyMap = {};
 
@@ -39,7 +39,7 @@ for (var i = 0, len = currencies.length; i < len; i++) {
 }
 
 const lineChartProduct = 'BTC-USD';
-var line = grid.set(3, 0, 5, 5, contrib.line, {label: "BTC-USD Price Chart", minY: 5500.0})
+var line = grid.set(3, 0, currencies.length, currencies.length, contrib.line, {label: "BTC-USD Price Chart", minY: 5500.0})
 var tradeChart = {
 	title: 'BTC-USD trade chart',
 	style: {line: 'red'},
