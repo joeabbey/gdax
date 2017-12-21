@@ -15,10 +15,12 @@ var authenticatedClient = null;
 //if(config) {
 //	authenticatedClient = new GDAX.AuthenticatedClient(config.apikey, config.base64secret, config.passphrase, apiURI)
 
-const websocket = new GDAX.WebsocketClient(currencies);
+var websocket = new GDAX.WebsocketClient(currencies);
 
 var screen = blessed.screen()
 var grid = new contrib.grid({rows: 8, cols: currencies.length, screen: screen})
+
+var lastTradeSeen = 0;
 
 var currencyMap = {};
 
@@ -39,12 +41,12 @@ for (var i = 0, len = currencies.length; i < len; i++) {
 }
 
 const lineChartProduct = 'BTC-USD';
-var line = grid.set(3, 0, currencies.length, currencies.length, contrib.line, {label: "BTC-USD Price Chart", minY: 5500.0})
+var line = grid.set(3, 0, 5, currencies.length, contrib.line, {label: "BTC-USD Price Chart", minY: 15000.0})
 var tradeChart = {
 	title: 'BTC-USD trade chart',
 	style: {line: 'red'},
 	x: Array(100),
-	y: Array(100).fill(5500.0)
+	y: Array(100).fill(15000.0)
 }
 
 //Fill up the X-axis with bullshit
@@ -84,17 +86,18 @@ const websocketPriceCallback = (data) => {
 			var eth_price = currencyMap['ETH-USD'].currentPrice;
 			var btc_price = currencyMap['BTC-USD'].currentPrice;
 			var eth_btc   = currencyMap['ETH-BTC'].currentPrice;
-			logger.log(sprintf("%s%8.6f - %8.6f = %8.6f %s%s", color_begin, eth_btc, eth_price / btc_price, eth_btc - (eth_price / btc_price), when.toFormat("HH24:MI:SS"), color_end));
+			logger.log(sprintf("%s %8.6f - %8.6f = %9.6f %s%s", color_begin, eth_btc, eth_price / btc_price, eth_btc - (eth_price / btc_price), when.toFormat("HH24:MI:SS"), color_end));
 		}
 		else if (data.product_id === 'LTC-BTC') {
 			var ltc_price = currencyMap['LTC-USD'].currentPrice;
 			var btc_price = currencyMap['BTC-USD'].currentPrice;
 			var ltc_btc   = currencyMap['LTC-BTC'].currentPrice;
-			logger.log(sprintf("%s%8.6f - %8.6f = %8.6f %s%s", color_begin, ltc_btc, ltc_price / btc_price, ltc_btc - (ltc_price / btc_price), when.toFormat("HH24:MI:SS"), color_end));
+			logger.log(sprintf("%s %8.6f - %8.6f = %9.6f %s%s", color_begin, ltc_btc, ltc_price / btc_price, ltc_btc - (ltc_price / btc_price), when.toFormat("HH24:MI:SS"), color_end));
 		}
 		else
 			logger.log(sprintf("%s %12.8f    %6.2f    %s %s", color_begin, parseFloat(data.size), parseFloat(data.price), when.toFormat("HH24:MI:SS"), color_end));
 	}
+	lastTradeSeen = 0;
 }
 
 websocket.on('message', websocketPriceCallback);
@@ -115,3 +118,12 @@ setInterval( function() {
 	screen.render();
 }, 60000);
 
+//Every second check to see if a trade has happened... after 10 seconds of no trades let's bump the websocket
+setInterval(function heartbeat() {
+  if (lastTradeSeen > 10) {
+    console.warn('Stopped receiving data from the websocket. Recreating it...');
+    websocket = new GDAX.WebsocketClient(currencies);
+	websocket.on('message', websocketPriceCallback);
+  }
+  lastTradeSeen++;
+}, 1000);
